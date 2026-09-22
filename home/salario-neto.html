@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de salario neto España — utilfy</title>
+  <meta name="description" content="Calcula tu salario neto mensual y anual a partir del bruto, con retención IRPF y Seguridad Social estimadas.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="marca">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="13" y="1" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="1" y="13" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="13" y="13" width="8" height="8" fill="currentColor"/>
+      </svg>
+      <span>utilfy</span>
+    </a>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="sobre.html">Sobre</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>💶 Calculadora de salario neto</h1>
+    <p class="subtitulo">Estimación de tu sueldo neto en España a partir del bruto anual.</p>
+
+    <div class="tarjeta">
+      <label for="bruto">Salario bruto anual (€)</label>
+      <input type="number" id="bruto" placeholder="Ej. 24000" min="0">
+
+      <div class="fila">
+        <div>
+          <label for="pagas">Número de pagas</label>
+          <select id="pagas">
+            <option value="12">12 pagas</option>
+            <option value="14" selected>14 pagas</option>
+          </select>
+        </div>
+        <div>
+          <label for="situacion">Situación personal</label>
+          <select id="situacion">
+            <option value="5550">Sin hijos / general</option>
+            <option value="6105">1 hijo a cargo</option>
+            <option value="7050">2 hijos a cargo</option>
+            <option value="7900">3 o más hijos a cargo</option>
+          </select>
+        </div>
+      </div>
+
+      <button onclick="calcular()">Calcular</button>
+
+      <div id="resultado" class="resultado" style="display:none;">
+        <div class="dato"><span>Salario bruto anual</span><span class="valor" id="r-bruto"></span></div>
+        <div class="dato"><span>Cotización Seguridad Social (trabajador)</span><span class="valor" id="r-ss"></span></div>
+        <div class="dato"><span>Retención IRPF estimada</span><span class="valor" id="r-irpf"></span></div>
+        <div class="dato"><span>Salario neto anual</span><span class="valor" id="r-neto-anual"></span></div>
+        <div class="dato"><span id="r-label-mensual">Salario neto por paga</span><span class="valor" id="r-neto-mensual"></span></div>
+      </div>
+    </div>
+
+    <div class="espacio-anuncio">[ Espacio reservado para anuncio AdSense ]</div>
+
+    <p class="aviso">
+      ⚠️ Cálculo orientativo con tramos estatales generales de IRPF y tipo medio de cotización a la Seguridad Social (contingencias comunes, desempleo, FP y MEI). No incluye particularidades autonómicas, reducciones específicas ni otras deducciones. No sustituye a una asesoría fiscal.
+    </p>
+  </main>
+
+  <footer>
+    <p>utilfy.com</p>
+  </footer>
+
+  <script>
+    // Tramos IRPF estatales generales orientativos (2024/2025), aplicados sobre base tras mínimo personal
+    const tramosIRPF = [
+      { hasta: 12450, tipo: 0.19 },
+      { hasta: 20200, tipo: 0.24 },
+      { hasta: 35200, tipo: 0.30 },
+      { hasta: 60000, tipo: 0.37 },
+      { hasta: 300000, tipo: 0.45 },
+      { hasta: Infinity, tipo: 0.47 }
+    ];
+
+    // Tipo de cotización del trabajador (aprox. 2024/2025): 4.7% comunes + 1.55% desempleo + 0.1% FP + 0.13% MEI
+    const TIPO_SS = 0.0648;
+    // Base máxima de cotización anual aproximada (2024)
+    const BASE_MAX_SS = 56646;
+
+    function calcularIRPF(baseImponible) {
+      let restante = baseImponible;
+      let impuesto = 0;
+      let limiteAnterior = 0;
+
+      for (const tramo of tramosIRPF) {
+        if (restante <= 0) break;
+        const anchoTramo = tramo.hasta - limiteAnterior;
+        const cantidadEnTramo = Math.min(restante, anchoTramo);
+        impuesto += cantidadEnTramo * tramo.tipo;
+        restante -= cantidadEnTramo;
+        limiteAnterior = tramo.hasta;
+      }
+      return impuesto;
+    }
+
+    function formatoEuros(valor) {
+      return valor.toLocaleString('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+    }
+
+    function calcular() {
+      const bruto = parseFloat(document.getElementById('bruto').value);
+      const pagas = parseInt(document.getElementById('pagas').value);
+      const minimoPersonal = parseFloat(document.getElementById('situacion').value);
+
+      if (!bruto || bruto <= 0) {
+        alert('Introduce un salario bruto válido');
+        return;
+      }
+
+      const baseCotizacion = Math.min(bruto, BASE_MAX_SS);
+      const cotizacionSS = baseCotizacion * TIPO_SS;
+
+      const baseImponibleIRPF = Math.max(0, bruto - cotizacionSS - minimoPersonal);
+      const irpf = calcularIRPF(baseImponibleIRPF);
+
+      const netoAnual = bruto - cotizacionSS - irpf;
+      const netoPorPaga = netoAnual / pagas;
+
+      document.getElementById('r-bruto').textContent = formatoEuros(bruto);
+      document.getElementById('r-ss').textContent = '- ' + formatoEuros(cotizacionSS);
+      document.getElementById('r-irpf').textContent = '- ' + formatoEuros(irpf);
+      document.getElementById('r-neto-anual').textContent = formatoEuros(netoAnual);
+      document.getElementById('r-label-mensual').textContent = `Salario neto por paga (${pagas} pagas)`;
+      document.getElementById('r-neto-mensual').textContent = formatoEuros(netoPorPaga);
+
+      document.getElementById('resultado').style.display = 'block';
+    }
+  </script>
+
+</body>
+</html>

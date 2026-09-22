@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conversor JSON a CSV online — utilfy</title>
+  <meta name="description" content="Convierte un array de objetos JSON en un archivo CSV descargable, gratis y online.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="marca">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="13" y="1" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="1" y="13" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="13" y="13" width="8" height="8" fill="currentColor"/>
+      </svg>
+      <span>utilfy</span>
+    </a>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="sobre.html">Sobre</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>📄 Conversor JSON → CSV</h1>
+    <p class="subtitulo">Pega un array de objetos JSON y descarga el CSV equivalente.</p>
+
+    <div class="tarjeta">
+      <label for="entrada">JSON de entrada (array de objetos)</label>
+      <textarea id="entrada" rows="10" placeholder='[{"nombre":"Pedro","ciudad":"Toledo"},{"nombre":"Ana","ciudad":"Madrid"}]'></textarea>
+
+      <div id="error" class="error" style="display:none;"></div>
+
+      <button onclick="convertir()">Convertir</button>
+      <button class="secundario" id="btnDescargar" onclick="descargar()" style="display:none;">Descargar CSV</button>
+
+      <div id="salidaContenedor" style="display:none;">
+        <label style="margin-top:16px;">Vista previa CSV</label>
+        <textarea id="salida" rows="10" readonly></textarea>
+      </div>
+    </div>
+
+    <div class="espacio-anuncio">[ Espacio reservado para anuncio AdSense ]</div>
+  </main>
+
+  <footer>
+    <p>utilfy.com</p>
+  </footer>
+
+  <script>
+    let csvGenerado = '';
+
+    function mostrarError(mensaje) {
+      const errorDiv = document.getElementById('error');
+      if (mensaje) {
+        errorDiv.textContent = '❌ ' + mensaje;
+        errorDiv.style.display = 'block';
+      } else {
+        errorDiv.style.display = 'none';
+      }
+    }
+
+    function escaparCampoCSV(valor) {
+      if (valor === null || valor === undefined) return '';
+      const texto = typeof valor === 'object' ? JSON.stringify(valor) : String(valor);
+      if (texto.includes(',') || texto.includes('"') || texto.includes('\n')) {
+        return '"' + texto.replace(/"/g, '""') + '"';
+      }
+      return texto;
+    }
+
+    function jsonACsv(array) {
+      if (!Array.isArray(array) || array.length === 0) {
+        throw new Error('El JSON debe ser un array de objetos con al menos un elemento');
+      }
+
+      // Recopilar todas las claves posibles (por si los objetos no son homogéneos)
+      const columnas = [];
+      for (const item of array) {
+        if (typeof item !== 'object' || item === null) {
+          throw new Error('Cada elemento del array debe ser un objeto');
+        }
+        for (const clave of Object.keys(item)) {
+          if (!columnas.includes(clave)) columnas.push(clave);
+        }
+      }
+
+      const filas = [columnas.map(escaparCampoCSV).join(',')];
+      for (const item of array) {
+        const fila = columnas.map(col => escaparCampoCSV(item[col]));
+        filas.push(fila.join(','));
+      }
+
+      return filas.join('\n');
+    }
+
+    function convertir() {
+      const texto = document.getElementById('entrada').value.trim();
+      if (!texto) {
+        mostrarError('Pega un JSON primero');
+        return;
+      }
+
+      let obj;
+      try {
+        obj = JSON.parse(texto);
+      } catch (e) {
+        mostrarError('JSON inválido: ' + e.message);
+        return;
+      }
+
+      try {
+        csvGenerado = jsonACsv(obj);
+        mostrarError(null);
+        document.getElementById('salida').value = csvGenerado;
+        document.getElementById('salidaContenedor').style.display = 'block';
+        document.getElementById('btnDescargar').style.display = 'inline-block';
+      } catch (e) {
+        mostrarError(e.message);
+      }
+    }
+
+    function descargar() {
+      if (!csvGenerado) return;
+      const blob = new Blob([csvGenerado], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'datos.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+
+</body>
+</html>

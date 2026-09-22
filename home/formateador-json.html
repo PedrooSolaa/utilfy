@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formateador de JSON online — utilfy</title>
+  <meta name="description" content="Valida e indenta tu JSON online gratis, sin subir tus datos a ningún servidor.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="marca">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="13" y="1" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="1" y="13" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="13" y="13" width="8" height="8" fill="currentColor"/>
+      </svg>
+      <span>utilfy</span>
+    </a>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="sobre.html">Sobre</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>{ } Formateador de JSON</h1>
+    <p class="subtitulo">Pega tu JSON, valídalo e indéntalo. Todo se procesa en tu navegador.</p>
+
+    <div class="tarjeta">
+      <label for="entrada">JSON de entrada</label>
+      <textarea id="entrada" rows="10" placeholder='{"nombre":"Pedro","ciudad":"Toledo"}'></textarea>
+
+      <div id="error" class="error" style="display:none;"></div>
+
+      <button onclick="formatear()">Formatear</button>
+      <button class="secundario" onclick="minificar()">Minificar</button>
+      <button class="secundario" onclick="copiar()">Copiar resultado</button>
+
+      <div id="salidaContenedor" style="display:none;">
+        <label style="margin-top:16px;">Resultado</label>
+        <textarea id="salida" rows="10" readonly></textarea>
+      </div>
+    </div>
+
+    <div class="espacio-anuncio">[ Espacio reservado para anuncio AdSense ]</div>
+  </main>
+
+  <footer>
+    <p>utilfy.com</p>
+  </footer>
+
+  <script>
+    function mostrarError(mensaje) {
+      const errorDiv = document.getElementById('error');
+      if (mensaje) {
+        errorDiv.textContent = '❌ ' + mensaje;
+        errorDiv.style.display = 'block';
+      } else {
+        errorDiv.style.display = 'none';
+      }
+    }
+
+    function parsearEntrada() {
+      const texto = document.getElementById('entrada').value.trim();
+      if (!texto) {
+        mostrarError('Pega un JSON primero');
+        return null;
+      }
+      try {
+        const obj = JSON.parse(texto);
+        mostrarError(null);
+        return obj;
+      } catch (e) {
+        mostrarError('JSON inválido: ' + e.message);
+        return null;
+      }
+    }
+
+    function mostrarSalida(texto) {
+      document.getElementById('salida').value = texto;
+      document.getElementById('salidaContenedor').style.display = 'block';
+    }
+
+    function formatear() {
+      const obj = parsearEntrada();
+      if (obj === null) return;
+      mostrarSalida(JSON.stringify(obj, null, 2));
+    }
+
+    function minificar() {
+      const obj = parsearEntrada();
+      if (obj === null) return;
+      mostrarSalida(JSON.stringify(obj));
+    }
+
+    function copiar() {
+      const salida = document.getElementById('salida');
+      if (!salida.value) return;
+      navigator.clipboard.writeText(salida.value);
+    }
+  </script>
+
+</body>
+</html>

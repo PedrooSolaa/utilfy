@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de expresiones cron online — utilfy</title>
+  <meta name="description" content="Crea expresiones cron fácilmente y entiende qué significan en lenguaje natural.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="marca">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="13" y="1" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="1" y="13" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="13" y="13" width="8" height="8" fill="currentColor"/>
+      </svg>
+      <span>utilfy</span>
+    </a>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="sobre.html">Sobre</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>⏰ Generador de expresiones cron</h1>
+    <p class="subtitulo">Configura cuándo se ejecuta tu tarea y genera la expresión cron.</p>
+
+    <div class="tarjeta">
+      <div class="fila-3">
+        <div>
+          <label for="minuto">Minuto</label>
+          <input type="text" id="minuto" value="*" oninput="generar()">
+        </div>
+        <div>
+          <label for="hora">Hora</label>
+          <input type="text" id="hora" value="*" oninput="generar()">
+        </div>
+        <div>
+          <label for="diaMes">Día del mes</label>
+          <input type="text" id="diaMes" value="*" oninput="generar()">
+        </div>
+      </div>
+      <div class="fila-3">
+        <div>
+          <label for="mes">Mes</label>
+          <input type="text" id="mes" value="*" oninput="generar()">
+        </div>
+        <div>
+          <label for="diaSemana">Día de la semana</label>
+          <input type="text" id="diaSemana" value="*" oninput="generar()">
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <p style="font-size:0.8rem; color:var(--texto-suave); margin-top:8px;">Usa * para "cualquiera", o valores como 5, 1-5, */2, 1,3,5</p>
+        </div>
+      </div>
+
+      <div id="r-error" class="error" style="display:none;"></div>
+
+      <div class="resultado">
+        <div class="dato"><span>Expresión cron</span><span class="valor" id="r-expresion" style="font-family: monospace;">* * * * *</span></div>
+      </div>
+
+      <p id="r-explicacion" style="margin-top:16px; font-size:0.95rem;"></p>
+
+      <button class="secundario" onclick="copiar()">Copiar expresión</button>
+    </div>
+
+    <div class="tarjeta">
+      <p style="font-weight:600; margin-top:0;">Ejemplos rápidos</p>
+      <button class="secundario" onclick="aplicar('0','*','*','*','*')">Cada hora en punto</button>
+      <button class="secundario" onclick="aplicar('0','0','*','*','*')">Cada día a medianoche</button>
+      <button class="secundario" onclick="aplicar('0','9','*','*','1-5')">Días laborables a las 9:00</button>
+      <button class="secundario" onclick="aplicar('0','0','1','*','*')">El primer día de cada mes</button>
+    </div>
+
+    <div class="espacio-anuncio">[ Espacio reservado para anuncio AdSense ]</div>
+  </main>
+
+  <footer>
+    <p>utilfy.com</p>
+  </footer>
+
+  <script>
+    function describirCampo(valor, nombreSingular, nombresLista) {
+      if (valor === '*') return null;
+
+      if (valor.includes('/')) {
+        const [, paso] = valor.split('/');
+        return `cada ${paso} ${nombreSingular}(s)`;
+      }
+
+      if (valor.includes(',')) {
+        const partes = valor.split(',').map(v => nombresLista ? (nombresLista[parseInt(v)] ?? v) : v);
+        return `en ${nombreSingular} ${partes.join(', ')}`;
+      }
+
+      if (valor.includes('-')) {
+        const [ini, fin] = valor.split('-');
+        const iniTexto = nombresLista ? (nombresLista[parseInt(ini)] ?? ini) : ini;
+        const finTexto = nombresLista ? (nombresLista[parseInt(fin)] ?? fin) : fin;
+        return `entre ${nombreSingular} ${iniTexto} y ${finTexto}`;
+      }
+
+      const texto = nombresLista ? (nombresLista[parseInt(valor)] ?? valor) : valor;
+      return `en ${nombreSingular} ${texto}`;
+    }
+
+    // Índice 7 también es domingo en cron (0 y 7 son equivalentes)
+    const diasSemanaNombres = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado','domingo'];
+    const mesesNombres = [null,'enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+    // Rangos válidos de cada campo cron: [mínimo, máximo, nombre para el mensaje de error]
+    const rangosCampos = {
+      minuto: [0, 59, 'minuto (0-59)'],
+      hora: [0, 23, 'hora (0-23)'],
+      diaMes: [1, 31, 'día del mes (1-31)'],
+      mes: [1, 12, 'mes (1-12)'],
+      diaSemana: [0, 7, 'día de la semana (0-7, donde 0 y 7 son domingo)']
+    };
+
+    function numeroEnRango(texto, min, max) {
+      if (!/^\d+$/.test(texto)) return false;
+      const n = parseInt(texto, 10);
+      return n >= min && n <= max;
+    }
+
+    // Valida un campo cron completo, aceptando *, listas (1,3,5), rangos (1-5) y pasos (*/2, 1-10/2)
+    function campoValido(valor, min, max) {
+      const elementos = valor.split(',');
+      for (const elemento of elementos) {
+        let base = elemento;
+        if (elemento.includes('/')) {
+          const [baseSinPaso, paso] = elemento.split('/');
+          base = baseSinPaso;
+          if (!/^\d+$/.test(paso) || parseInt(paso, 10) <= 0) return false;
+        }
+
+        if (base === '*') continue;
+
+        if (base.includes('-')) {
+          const [inicio, fin] = base.split('-');
+          if (!numeroEnRango(inicio, min, max) || !numeroEnRango(fin, min, max)) return false;
+          if (parseInt(inicio, 10) > parseInt(fin, 10)) return false;
+        } else if (!numeroEnRango(base, min, max)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function explicar(minuto, hora, diaMes, mes, diaSemana) {
+      const partes = [];
+
+      if (minuto === '*' && hora === '*') {
+        partes.push('cada minuto');
+      } else if (hora !== '*' && minuto !== '*' && !minuto.includes('/') && !minuto.includes(',') && !minuto.includes('-')) {
+        const h = hora.padStart(2, '0');
+        const m = minuto.padStart(2, '0');
+        partes.push(`a las ${h}:${m}`);
+      } else {
+        const descMin = describirCampo(minuto, 'minuto');
+        const descHora = describirCampo(hora, 'hora');
+        if (descMin) partes.push(descMin);
+        if (descHora) partes.push(descHora);
+      }
+
+      const descDiaMes = describirCampo(diaMes, 'día');
+      if (descDiaMes) partes.push(descDiaMes);
+
+      const descMes = describirCampo(mes, 'mes', mesesNombres);
+      if (descMes) partes.push(descMes);
+
+      const descDiaSemana = describirCampo(diaSemana, 'día de la semana', diasSemanaNombres);
+      if (descDiaSemana) partes.push(descDiaSemana);
+
+      if (partes.length === 0) return 'Se ejecuta cada minuto, siempre.';
+      return 'Se ejecuta ' + partes.join(', ') + '.';
+    }
+
+    function generar() {
+      const valores = {
+        minuto: document.getElementById('minuto').value || '*',
+        hora: document.getElementById('hora').value || '*',
+        diaMes: document.getElementById('diaMes').value || '*',
+        mes: document.getElementById('mes').value || '*',
+        diaSemana: document.getElementById('diaSemana').value || '*'
+      };
+
+      const errores = [];
+      for (const campo of Object.keys(rangosCampos)) {
+        const [min, max, nombre] = rangosCampos[campo];
+        if (!campoValido(valores[campo], min, max)) {
+          errores.push(nombre);
+        }
+      }
+
+      const errorDiv = document.getElementById('r-error');
+      const expresion = `${valores.minuto} ${valores.hora} ${valores.diaMes} ${valores.mes} ${valores.diaSemana}`;
+      document.getElementById('r-expresion').textContent = expresion;
+
+      if (errores.length > 0) {
+        errorDiv.textContent = '❌ Valor fuera de rango en: ' + errores.join(', ');
+        errorDiv.style.display = 'block';
+        document.getElementById('r-explicacion').textContent = '';
+        return;
+      }
+
+      errorDiv.style.display = 'none';
+      document.getElementById('r-explicacion').textContent =
+        explicar(valores.minuto, valores.hora, valores.diaMes, valores.mes, valores.diaSemana);
+    }
+
+    function aplicar(minuto, hora, diaMes, mes, diaSemana) {
+      document.getElementById('minuto').value = minuto;
+      document.getElementById('hora').value = hora;
+      document.getElementById('diaMes').value = diaMes;
+      document.getElementById('mes').value = mes;
+      document.getElementById('diaSemana').value = diaSemana;
+      generar();
+    }
+
+    function copiar() {
+      navigator.clipboard.writeText(document.getElementById('r-expresion').textContent);
+    }
+
+    generar();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,298 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --papel: #f3f5f4;
+  --linea-papel: rgba(28, 43, 57, 0.05);
+  --superficie: #ffffff;
+  --tinta: #1c2b39;
+  --tinta-suave: #5b6b78;
+  --linea: #dce2e6;
+  --azul: #2d5f8a;
+  --azul-oscuro: #1f3f5c;
+  --ambar: #d98a1f;
+  --ambar-suave: #fbeed9;
+  --error: #b3402a;
+  --exito: #3c7a5e;
+  --radio: 6px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+  color: var(--tinta);
+  background-color: var(--papel);
+  background-image:
+    linear-gradient(var(--linea-papel) 1px, transparent 1px),
+    linear-gradient(90deg, var(--linea-papel) 1px, transparent 1px);
+  background-size: 28px 28px;
+  line-height: 1.55;
+}
+
+/* --- Cabecera --- */
+
+header {
+  background: var(--papel);
+  border-bottom: 1px solid var(--linea);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--tinta);
+}
+
+.marca svg { display: block; }
+
+.marca span {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+header nav a {
+  color: var(--tinta-suave);
+  text-decoration: none;
+  margin-left: 24px;
+  font-size: 0.92rem;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 2px;
+}
+
+header nav a:hover { color: var(--tinta); border-bottom-color: var(--ambar); }
+
+/* --- Contenido --- */
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 56px 24px 96px;
+}
+
+h1 {
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 8px;
+}
+
+p.subtitulo {
+  color: var(--tinta-suave);
+  margin: 0 0 40px;
+  max-width: 52ch;
+  font-size: 1.02rem;
+}
+
+/* --- Índice de herramientas (home) --- */
+
+.catalogo {
+  border-top: 1px solid var(--linea);
+}
+
+.entrada-catalogo {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  padding: 20px 12px;
+  text-decoration: none;
+  color: var(--tinta);
+  border-bottom: 1px solid var(--linea);
+  border-left: 3px solid transparent;
+}
+
+.entrada-catalogo:hover {
+  background: var(--superficie);
+  border-left-color: var(--ambar);
+}
+
+.entrada-catalogo .num {
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--ambar);
+  font-size: 0.9rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  width: 24px;
+}
+
+.entrada-catalogo .texto h3 {
+  margin: 0 0 4px;
+  font-size: 1.08rem;
+  font-weight: 600;
+}
+
+.entrada-catalogo .texto p {
+  margin: 0;
+  color: var(--tinta-suave);
+  font-size: 0.92rem;
+}
+
+/* --- Panel principal de cada herramienta --- */
+
+.tarjeta {
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+/* --- Formularios --- */
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 0.88rem;
+  color: var(--tinta);
+}
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--linea);
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  margin-bottom: 18px;
+  background: var(--superficie);
+  color: var(--tinta);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--azul);
+  box-shadow: 0 0 0 3px rgba(45, 95, 138, 0.14);
+}
+
+textarea {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+
+/* --- Botones --- */
+
+button {
+  background: var(--tinta);
+  color: var(--papel);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  margin: 0 8px 8px 0;
+}
+
+button:hover { background: var(--azul-oscuro); }
+
+button.secundario {
+  background: transparent;
+  color: var(--tinta);
+  border: 1px solid var(--linea);
+}
+
+button.secundario:hover {
+  border-color: var(--tinta);
+  background: var(--papel);
+}
+
+/* --- Resultados --- */
+
+.resultado {
+  background: var(--papel);
+  border-radius: 4px;
+  padding: 6px 16px;
+  margin-top: 16px;
+}
+
+.dato {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--linea);
+  font-size: 0.95rem;
+}
+
+.dato:last-child { border-bottom: none; }
+
+.dato .valor {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+}
+
+.dato:last-child .valor {
+  background: var(--tinta);
+  color: var(--ambar);
+  padding: 3px 10px;
+  border-radius: 4px;
+}
+
+.error {
+  color: var(--error);
+  font-size: 0.88rem;
+  margin-top: -10px;
+  margin-bottom: 16px;
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.fila-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.aviso {
+  font-size: 0.82rem;
+  color: var(--tinta-suave);
+  margin-top: 20px;
+  border-left: 3px solid var(--linea);
+  padding-left: 12px;
+}
+
+.espacio-anuncio {
+  background: var(--superficie);
+  border: 1px dashed var(--linea);
+  border-radius: var(--radio);
+  padding: 20px;
+  text-align: center;
+  color: var(--tinta-suave);
+  font-size: 0.82rem;
+  font-family: 'IBM Plex Mono', monospace;
+  margin: 36px 0;
+}
+
+footer {
+  text-align: center;
+  padding: 28px;
+  color: var(--tinta-suave);
+  font-size: 0.85rem;
+  border-top: 1px solid var(--linea);
+}
+
+footer a { color: var(--tinta-suave); }
+
+@media (max-width: 600px) {
+  .fila, .fila-3 { grid-template-columns: 1fr; }
+  .entrada-catalogo { gap: 12px; }
+}

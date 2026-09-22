@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conversor de unidades online — utilfy</title>
+  <meta name="description" content="Convierte longitud, peso y temperatura entre distintas unidades, gratis y online.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="marca">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="13" y="1" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="1" y="13" width="8" height="8" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="13" y="13" width="8" height="8" fill="currentColor"/>
+      </svg>
+      <span>utilfy</span>
+    </a>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="sobre.html">Sobre</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>📏 Conversor de unidades</h1>
+    <p class="subtitulo">Longitud, peso y temperatura en un mismo sitio.</p>
+
+    <div class="tarjeta">
+      <label for="categoria">Categoría</label>
+      <select id="categoria" onchange="cambiarCategoria()">
+        <option value="longitud">Longitud</option>
+        <option value="peso">Peso</option>
+        <option value="temperatura">Temperatura</option>
+      </select>
+
+      <div class="fila">
+        <div>
+          <label for="valorEntrada">Valor</label>
+          <input type="number" id="valorEntrada" value="1" oninput="convertir()">
+        </div>
+        <div>
+          <label for="unidadOrigen">De</label>
+          <select id="unidadOrigen" onchange="convertir()"></select>
+        </div>
+      </div>
+
+      <label for="unidadDestino">A</label>
+      <select id="unidadDestino" onchange="convertir()"></select>
+
+      <div class="resultado">
+        <div class="dato"><span>Resultado</span><span class="valor" id="r-resultado">—</span></div>
+      </div>
+    </div>
+
+    <div class="espacio-anuncio">[ Espacio reservado para anuncio AdSense ]</div>
+  </main>
+
+  <footer>
+    <p>utilfy.com</p>
+  </footer>
+
+  <script>
+    // Factores de conversión respecto a una unidad base (metro y kilogramo)
+    const unidades = {
+      longitud: {
+        base: 'm',
+        opciones: {
+          mm: 0.001, cm: 0.01, m: 1, km: 1000,
+          pulgada: 0.0254, pie: 0.3048, yarda: 0.9144, milla: 1609.34
+        },
+        etiquetas: { mm: 'Milímetros', cm: 'Centímetros', m: 'Metros', km: 'Kilómetros', pulgada: 'Pulgadas', pie: 'Pies', yarda: 'Yardas', milla: 'Millas' }
+      },
+      peso: {
+        base: 'kg',
+        opciones: {
+          mg: 0.000001, g: 0.001, kg: 1, tonelada: 1000,
+          onza: 0.0283495, libra: 0.453592
+        },
+        etiquetas: { mg: 'Miligramos', g: 'Gramos', kg: 'Kilogramos', tonelada: 'Toneladas', onza: 'Onzas', libra: 'Libras' }
+      }
+    };
+
+    function poblarSelectUnidades(categoria) {
+      const origen = document.getElementById('unidadOrigen');
+      const destino = document.getElementById('unidadDestino');
+      origen.innerHTML = '';
+      destino.innerHTML = '';
+
+      if (categoria === 'temperatura') {
+        const opciones = { celsius: 'Celsius (°C)', fahrenheit: 'Fahrenheit (°F)', kelvin: 'Kelvin (K)' };
+        for (const [clave, etiqueta] of Object.entries(opciones)) {
+          origen.innerHTML += `<option value="${clave}">${etiqueta}</option>`;
+          destino.innerHTML += `<option value="${clave}">${etiqueta}</option>`;
+        }
+        destino.value = 'fahrenheit';
+      } else {
+        const { opciones, etiquetas } = unidades[categoria];
+        for (const clave of Object.keys(opciones)) {
+          origen.innerHTML += `<option value="${clave}">${etiquetas[clave]}</option>`;
+          destino.innerHTML += `<option value="${clave}">${etiquetas[clave]}</option>`;
+        }
+        const claves = Object.keys(opciones);
+        destino.value = claves[1] || claves[0];
+      }
+    }
+
+    function convertirTemperatura(valor, origen, destino) {
+      // Primero pasar todo a Celsius
+      let celsius;
+      if (origen === 'celsius') celsius = valor;
+      else if (origen === 'fahrenheit') celsius = (valor - 32) * 5 / 9;
+      else celsius = valor - 273.15; // kelvin
+
+      if (destino === 'celsius') return celsius;
+      if (destino === 'fahrenheit') return celsius * 9 / 5 + 32;
+      return celsius + 273.15; // kelvin
+    }
+
+    function convertir() {
+      const categoria = document.getElementById('categoria').value;
+      const valor = parseFloat(document.getElementById('valorEntrada').value);
+      const origen = document.getElementById('unidadOrigen').value;
+      const destino = document.getElementById('unidadDestino').value;
+
+      if (isNaN(valor)) {
+        document.getElementById('r-resultado').textContent = '—';
+        return;
+      }
+
+      let resultado;
+      if (categoria === 'temperatura') {
+        resultado = convertirTemperatura(valor, origen, destino);
+      } else {
+        const { opciones } = unidades[categoria];
+        const valorEnBase = valor * opciones[origen];
+        resultado = valorEnBase / opciones[destino];
+      }
+
+      document.getElementById('r-resultado').textContent =
+        resultado.toLocaleString('es-ES', { maximumFractionDigits: 6 });
+    }
+
+    function cambiarCategoria() {
+      const categoria = document.getElementById('categoria').value;
+      poblarSelectUnidades(categoria);
+      convertir();
+    }
+
+    cambiarCategoria();
+  </script>
+
+</body>
+</html>
